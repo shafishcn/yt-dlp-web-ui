@@ -1,7 +1,6 @@
 name: Docker
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
   push:
     branches: [ master ]
   schedule:
