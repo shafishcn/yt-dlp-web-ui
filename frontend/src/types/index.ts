@@ -107,6 +107,37 @@ export type CustomTemplate = {
   content: string
 }
 
+export type UploadProvider = 's3' | 'gcs' | 'oss' | 'upyun' | 'rclone'
+
+export type UploadConfig = {
+  enabled: boolean
+  provider: UploadProvider
+  bucket: string
+  service: string
+  remote: string
+  key: string
+  prefix: string
+  deleteLocal: boolean
+  endpointUrl: string
+  regionName: string
+  accessKeyId: string
+  secretAccessKey: string
+  profileName: string
+  pathStyle: boolean
+  project: string
+  credentialsFile: string
+  predefinedAcl: string
+  region: string
+  endpoint: string
+  accessKeySecret: string
+  securityToken: string
+  operator: string
+  password: string
+  timeout: string
+  target: string
+  rcloneBinary: string
+}
+
 export enum LiveStreamStatus {
   WAITING,
   IN_PROGRESS,

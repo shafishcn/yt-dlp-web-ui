@@ -21,11 +21,14 @@ import { useAtomValue } from 'jotai'
 import { forwardRef, startTransition, useState } from 'react'
 import { customArgsState } from '../../atoms/downloadTemplate'
 import { serverURL } from '../../atoms/settings'
+import { uploadConfigState } from '../../atoms/upload'
 import { useToast } from '../../hooks/toast'
 import { useI18n } from '../../hooks/useI18n'
 import { ffetch } from '../../lib/httpClient'
 import { Subscription } from '../../services/subscriptions'
+import { buildUploadArgs, getUploadValidationKey } from '../../utils'
 import ExtraDownloadOptions from '../ExtraDownloadOptions'
+import UploadOptions from '../UploadOptions'
 
 type Props = {
   subscription: Subscription | undefined
@@ -46,6 +49,7 @@ const SubscriptionsEditDialog: React.FC<Props> = ({ subscription, onClose }) => 
   const [subscriptionCron, setSubscriptionCron] = useState('')
 
   const customArgs = useAtomValue(customArgsState)
+  const uploadConfig = useAtomValue(uploadConfigState)
 
   const { i18n } = useI18n()
   const { pushMessage } = useToast()
@@ -136,15 +140,29 @@ const SubscriptionsEditDialog: React.FC<Props> = ({ subscription, onClose }) => 
                     />
                   </Grid>
                   <Grid item xs={12}>
+                    <UploadOptions />
+                  </Grid>
+                  <Grid item xs={12}>
                     <Button
                       sx={{ mt: 2 }}
                       variant="contained"
-                      onClick={() => startTransition(async () => await editSubscription({
-                        id: subscription?.id ?? '',
-                        url: subscriptionURL || subscription?.url!,
-                        params: customArgs || subscription?.params!,
-                        cron_expression: subscriptionCron || subscription?.cron_expression!
-                      }))}
+                      onClick={() => startTransition(async () => {
+                        const uploadValidationKey = getUploadValidationKey(uploadConfig)
+                        if (uploadValidationKey) {
+                          pushMessage(i18n.t(uploadValidationKey), 'error')
+                          return
+                        }
+
+                        const uploadArgs = buildUploadArgs(uploadConfig)
+                        const params = `${customArgs} ${uploadArgs}`.replace(/  +/g, ' ').trim()
+
+                        await editSubscription({
+                          id: subscription?.id ?? '',
+                          url: subscriptionURL || subscription?.url!,
+                          params: params || subscription?.params!,
+                          cron_expression: subscriptionCron || subscription?.cron_expression!
+                        })
+                      })}
                     >
                       {i18n.t('editButtonLabel')}
                     </Button>

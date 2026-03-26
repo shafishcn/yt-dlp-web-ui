@@ -1,7 +1,7 @@
 import { blue, red } from '@mui/material/colors'
 import { pipe } from 'fp-ts/lib/function'
 import { Accent, ThemeNarrowed } from './atoms/settings'
-import type { RPCResponse } from "./types"
+import type { RPCResponse, UploadConfig } from "./types"
 import { ProcessStatus } from './types'
 
 export function validateIP(ipAddr: string): boolean {
@@ -31,6 +31,135 @@ export function toFormatArgs(codes: string[]): string {
     return ` -f ${codes[0]}`
   }
   return ''
+}
+
+const trimValue = (value: string) => value.trim()
+
+const appendArg = (params: string[], key: string, value: string) => {
+  const trimmed = trimValue(value)
+  if (trimmed !== '') {
+    params.push(`${key}=${trimmed}`)
+  }
+}
+
+const appendBoolArg = (
+  params: string[],
+  key: string,
+  value: boolean,
+  defaultValue: boolean = false
+) => {
+  if (value !== defaultValue) {
+    params.push(`${key}=${value ? 'true' : 'false'}`)
+  }
+}
+
+export function getUploadValidationKey(config: UploadConfig): string | null {
+  if (!config.enabled) {
+    return null
+  }
+
+  switch (config.provider) {
+    case 's3':
+    case 'gcs':
+      return trimValue(config.bucket) === ''
+        ? 'uploadValidationBucket'
+        : null
+    case 'oss':
+      if (trimValue(config.bucket) === '') {
+        return 'uploadValidationBucket'
+      }
+      return trimValue(config.region) === ''
+        ? 'uploadValidationRegion'
+        : null
+    case 'upyun':
+      if (trimValue(config.service) === '') {
+        return 'uploadValidationService'
+      }
+      if (trimValue(config.operator) === '') {
+        return 'uploadValidationOperator'
+      }
+      return trimValue(config.password) === ''
+        ? 'uploadValidationPassword'
+        : null
+    case 'rclone':
+      return trimValue(config.remote) === ''
+        ? 'uploadValidationRemote'
+        : null
+    default:
+      return null
+  }
+}
+
+export function buildUploadArgs(config: UploadConfig): string {
+  if (!config.enabled) {
+    return ''
+  }
+
+  const params: string[] = []
+
+  switch (config.provider) {
+    case 's3':
+      appendArg(params, 'bucket', config.bucket)
+      appendArg(params, 'key', config.key)
+      if (trimValue(config.key) === '') {
+        appendArg(params, 'prefix', config.prefix)
+      }
+      appendArg(params, 'endpoint_url', config.endpointUrl)
+      appendArg(params, 'region_name', config.regionName)
+      appendArg(params, 'aws_access_key_id', config.accessKeyId)
+      appendArg(params, 'aws_secret_access_key', config.secretAccessKey)
+      appendArg(params, 'profile_name', config.profileName)
+      appendBoolArg(params, 'path_style', config.pathStyle)
+      appendBoolArg(params, 'delete_local', config.deleteLocal)
+      return `--use-postprocessor S3Upload:${params.concat('when=after_move').join(';')}`
+    case 'gcs':
+      appendArg(params, 'bucket', config.bucket)
+      appendArg(params, 'key', config.key)
+      if (trimValue(config.key) === '') {
+        appendArg(params, 'prefix', config.prefix)
+      }
+      appendArg(params, 'project', config.project)
+      appendArg(params, 'credentials_file', config.credentialsFile)
+      appendArg(params, 'predefined_acl', config.predefinedAcl)
+      appendBoolArg(params, 'delete_local', config.deleteLocal)
+      return `--use-postprocessor GCSUpload:${params.concat('when=after_move').join(';')}`
+    case 'oss':
+      appendArg(params, 'bucket', config.bucket)
+      appendArg(params, 'key', config.key)
+      if (trimValue(config.key) === '') {
+        appendArg(params, 'prefix', config.prefix)
+      }
+      appendArg(params, 'region', config.region)
+      appendArg(params, 'endpoint', config.endpoint)
+      appendArg(params, 'access_key_id', config.accessKeyId)
+      appendArg(params, 'access_key_secret', config.accessKeySecret)
+      appendArg(params, 'security_token', config.securityToken)
+      appendBoolArg(params, 'delete_local', config.deleteLocal)
+      return `--use-postprocessor OSSUpload:${params.concat('when=after_move').join(';')}`
+    case 'upyun':
+      appendArg(params, 'service', config.service)
+      appendArg(params, 'key', config.key)
+      if (trimValue(config.key) === '') {
+        appendArg(params, 'prefix', config.prefix)
+      }
+      appendArg(params, 'operator', config.operator)
+      appendArg(params, 'password', config.password)
+      appendArg(params, 'endpoint', config.endpoint)
+      appendArg(params, 'timeout', config.timeout)
+      appendBoolArg(params, 'delete_local', config.deleteLocal)
+      return `--use-postprocessor UpYunUpload:${params.concat('when=after_move').join(';')}`
+    case 'rclone':
+      appendArg(params, 'remote', config.remote)
+      appendArg(params, 'target', config.target)
+      if (trimValue(config.target) === '') {
+        appendArg(params, 'prefix', config.prefix)
+      }
+      appendArg(params, 'rclone', config.rcloneBinary)
+      appendBoolArg(params, 'delete_local', config.deleteLocal)
+      return `--use-postprocessor RcloneUpload:${params.concat('when=after_move').join(';')}`
+    default:
+      return ''
+  }
 }
 
 export function formatSize(bytes: number): string {

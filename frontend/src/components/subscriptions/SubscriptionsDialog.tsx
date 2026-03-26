@@ -21,11 +21,14 @@ import { useAtomValue } from 'jotai'
 import { forwardRef, startTransition, useState } from 'react'
 import { customArgsState } from '../../atoms/downloadTemplate'
 import { serverURL } from '../../atoms/settings'
+import { uploadConfigState } from '../../atoms/upload'
 import { useToast } from '../../hooks/toast'
 import { useI18n } from '../../hooks/useI18n'
 import { ffetch } from '../../lib/httpClient'
 import { Subscription } from '../../services/subscriptions'
+import { buildUploadArgs, getUploadValidationKey } from '../../utils'
 import ExtraDownloadOptions from '../ExtraDownloadOptions'
+import UploadOptions from '../UploadOptions'
 
 type Props = {
   open: boolean
@@ -46,6 +49,7 @@ const SubscriptionsDialog: React.FC<Props> = ({ open, onClose }) => {
   const [subscriptionCron, setSubscriptionCron] = useState('')
 
   const customArgs = useAtomValue(customArgsState)
+  const uploadConfig = useAtomValue(uploadConfigState)
 
   const { i18n } = useI18n()
   const { pushMessage } = useToast()
@@ -138,15 +142,29 @@ const SubscriptionsDialog: React.FC<Props> = ({ open, onClose }) => {
                     />
                   </Grid>
                   <Grid item xs={12}>
+                    <UploadOptions />
+                  </Grid>
+                  <Grid item xs={12}>
                     <Button
                       sx={{ mt: 2 }}
                       variant="contained"
                       disabled={subscriptionURL === ''}
-                      onClick={() => startTransition(() => submit({
-                        url: subscriptionURL,
-                        params: customArgs,
-                        cron_expression: subscriptionCron
-                      }))}
+                      onClick={() => startTransition(() => {
+                        const uploadValidationKey = getUploadValidationKey(uploadConfig)
+                        if (uploadValidationKey) {
+                          pushMessage(i18n.t(uploadValidationKey), 'error')
+                          return
+                        }
+
+                        const uploadArgs = buildUploadArgs(uploadConfig)
+                        const params = `${customArgs} ${uploadArgs}`.replace(/  +/g, ' ').trim()
+
+                        submit({
+                          url: subscriptionURL,
+                          params,
+                          cron_expression: subscriptionCron
+                        })
+                      })}
                     >
                       {i18n.t('startButton')}
                     </Button>

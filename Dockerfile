@@ -28,8 +28,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o yt-dlp-webui
 FROM python:3.13.2-alpine3.21
 
 RUN apk update && \
-apk add ffmpeg ca-certificates curl wget gnutls --no-cache && \
-pip install "yt-dlp[default,curl-cffi,mutagen,pycryptodomex,phantomjs,secretstorage]"
+apk add ffmpeg ca-certificates curl wget gnutls rclone --no-cache && \
+pip install \
+  "yt-dlp[default,curl-cffi,secretstorage]" \
+  "boto3>=1.35,<2" \
+  "google-cloud-storage>=2.18,<4" \
+  "alibabacloud-oss-v2>=1.2,<2" \
+  upyun
 
 VOLUME /downloads /config
 

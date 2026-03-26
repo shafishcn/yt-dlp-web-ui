@@ -39,16 +39,18 @@ import {
   savedTemplatesState
 } from '../atoms/downloadTemplate'
 import { settingsState } from '../atoms/settings'
+import { uploadConfigState } from '../atoms/upload'
 import { availableDownloadPathsState, connectedState } from '../atoms/status'
 import FormatsGrid from '../components/FormatsGrid'
 import { useToast } from '../hooks/toast'
 import { useI18n } from '../hooks/useI18n'
 import { useRPC } from '../hooks/useRPC'
 import type { DLMetadata } from '../types'
-import { toFormatArgs } from '../utils'
+import { buildUploadArgs, getUploadValidationKey, toFormatArgs } from '../utils'
 import CustomArgsTextField from './CustomArgsTextField'
 import ExtraDownloadOptions from './ExtraDownloadOptions'
 import LoadingBackdrop from './LoadingBackdrop'
+import UploadOptions from './UploadOptions'
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & {
@@ -72,6 +74,7 @@ const DownloadDialog: FC<Props> = ({ open, onClose, onDownloadStart }) => {
   const savedTemplates = useAtomValue(savedTemplatesState)
   const customArgs = useAtomValue(customArgsState)
   const cookies = useAtomValue(cookiesTemplateState)
+  const uploadConfig = useAtomValue(uploadConfigState)
 
   const [downloadFormats, setDownloadFormats] = useState<DLMetadata>()
   const [pickedVideoFormat, setPickedVideoFormat] = useState('')
@@ -104,13 +107,21 @@ const DownloadDialog: FC<Props> = ({ open, onClose, onDownloadStart }) => {
     * Retrive url from input, cli-arguments from checkboxes and emits via WebSocket
   */
   const sendUrl = async (immediate?: string) => {
+    const uploadValidationKey = getUploadValidationKey(uploadConfig)
+    if (uploadValidationKey) {
+      pushMessage(i18n.t(uploadValidationKey), 'error')
+      return
+    }
+
+    const uploadArgs = buildUploadArgs(uploadConfig)
+
     for (const line of url.split('\n')) {
       const codes = new Array<string>()
       if (pickedVideoFormat !== '') codes.push(pickedVideoFormat)
       if (pickedAudioFormat !== '') codes.push(pickedAudioFormat)
       if (pickedBestFormat !== '') codes.push(pickedBestFormat)
 
-      const downloadTemplate = `${customArgs} ${cookies}`
+      const downloadTemplate = `${customArgs} ${uploadArgs} ${cookies}`
         .replace(/  +/g, ' ')
         .trim()
 
@@ -349,6 +360,7 @@ const DownloadDialog: FC<Props> = ({ open, onClose, onDownloadStart }) => {
                 <Suspense>
                   {savedTemplates.length > 0 && <ExtraDownloadOptions />}
                 </Suspense>
+                <UploadOptions />
                 <Grid container spacing={1} pt={2} justifyContent="space-between">
                   <Grid item>
                     <Grid item>

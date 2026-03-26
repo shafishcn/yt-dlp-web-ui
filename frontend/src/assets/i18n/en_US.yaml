@@ -84,3 +84,42 @@ keys:
   twitchIntegrationInfo: |
     To enable monitoring Twitch streams follow this wiki page.
     https://github.com/marcopiovanello/yt-dlp-web-ui/wiki/Twitch-integration
+  uploadConfigTitle: Upload after download
+  uploadConfigHelp: Requires a yt-dlp binary that includes the custom upload postprocessors. The default upstream yt-dlp will not understand these options.
+  uploadEnable: Enable object storage upload
+  uploadProviderS3: S3 / MinIO / S3-compatible
+  uploadProviderGCS: Google Cloud Storage
+  uploadProviderOSS: Alibaba OSS
+  uploadProviderUpYun: UpYun
+  uploadProviderRclone: rclone remote
+  uploadBucket: Bucket
+  uploadService: Service
+  uploadRemote: Remote
+  uploadKey: Object key
+  uploadPrefix: Prefix
+  uploadPrefixHelp: Used when object key is blank. Object key takes priority over prefix.
+  uploadEndpointUrl: Endpoint URL
+  uploadRegionName: Region name
+  uploadAccessKeyId: Access key ID
+  uploadSecretAccessKey: Secret access key
+  uploadProfileName: Profile name
+  uploadPathStyle: Use path-style addressing
+  uploadProject: Project
+  uploadCredentialsFile: Credentials file
+  uploadPredefinedAcl: Predefined ACL
+  uploadRegion: Region
+  uploadEndpoint: Endpoint
+  uploadAccessKeySecret: Access key secret
+  uploadSecurityToken: Security token
+  uploadOperator: Operator
+  uploadPassword: Password
+  uploadTimeout: Timeout (seconds)
+  uploadTarget: Target path
+  uploadRcloneBinary: rclone binary
+  uploadDeleteLocal: Delete local file after successful upload
+  uploadValidationBucket: Upload is enabled but bucket is empty.
+  uploadValidationRegion: Upload is enabled but region is empty.
+  uploadValidationService: Upload is enabled but service is empty.
+  uploadValidationOperator: Upload is enabled but operator is empty.
+  uploadValidationPassword: Upload is enabled but password is empty.
+  uploadValidationRemote: Upload is enabled but remote is empty.
